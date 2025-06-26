@@ -112,123 +112,192 @@
                 content: attr(data-label);
             }
         }
+
+        /* Password Overlay Styles */
+        #passwordOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); /* Darker overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        #passwordPrompt {
+            background-color: #ffffff;
+            padding: 2.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        #passwordPrompt h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #374151;
+        }
+        #passwordInput {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        #passwordSubmitBtn {
+            background-color: #4f46e5; /* Indigo-600 */
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #passwordSubmitBtn:hover {
+            background-color: #4338ca; /* Indigo-700 */
+        }
+        #passwordError {
+            color: #ef4444; /* Red-500 */
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
-    <div class="container py-8">
-        <h1 class="text-3xl font-bold text-center mb-6 text-gray-900">コンサル選考進捗管理</h1>
 
-        <!-- Summary Statistics -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <p class="text-sm text-gray-500">総応募数</p>
-                <p id="totalApplications" class="text-2xl font-bold text-indigo-600">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <p class="text-sm text-gray-500">選考中</p>
-                <p id="inProgressApplications" class="text-2xl font-bold text-blue-600">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <p class="text-sm text-gray-500">内定獲得数</p>
-                <p id="offeredApplications" class="text-2xl font-bold text-green-600">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-md text-center">
-                <p class="text-sm text-gray-500">見送り数</p>
-                <p id="rejectedApplications" class="text-2xl font-bold text-red-600">0</p>
-            </div>
+    <!-- Password Overlay -->
+    <div id="passwordOverlay">
+        <div id="passwordPrompt" class="rounded-lg">
+            <h2>パスワードを入力してください</h2>
+            <input type="password" id="passwordInput" placeholder="パスワード" autocomplete="off">
+            <button id="passwordSubmitBtn">解除</button>
+            <p id="passwordError" class="text-red-500 hidden"></p>
         </div>
+    </div>
 
-        <!-- Add/Edit Form Toggle -->
-        <div class="mb-4">
-            <button id="toggleFormBtn" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                新しい応募を追加
-            </button>
-        </div>
+    <!-- Main Application Content -->
+    <div id="appContent" style="display: none;">
+        <div class="container py-8">
+            <h1 class="text-3xl font-bold text-center mb-6 text-gray-900">コンサル選考進捗管理</h1>
 
-        <!-- Add/Edit Form (Collapsible) -->
-        <div id="applicationFormContainer" class="bg-white p-6 rounded-lg shadow-md mb-8 hidden">
-            <h2 id="formTitle" class="text-xl font-semibold mb-4 text-gray-900">新しい応募を追加</h2>
-            <form id="applicationForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                    <label for="status" class="block text-sm font-medium text-gray-700">選考状況</label>
-                    <select id="status" name="status" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="応募前">応募前</option>
-                        <option value="書類選考中">書類選考中</option>
-                        <option value="Webテスト中">Webテスト中</option>
-                        <option value="一次面接中">一次面接中</option>
-                        <option value="二次面接中">二次面接中</option>
-                        <option value="三次面接中">三次面接中</option>
-                        <option value="最終面接中">最終面接中</option>
-                        <option value="ジョブ選考中">ジョブ選考中</option>
-                        <option value="内定獲得">内定獲得</option>
-                        <option value="見送り">見送り</option>
-                        <option value="辞退">辞退</option>
-                    </select>
+            <!-- Summary Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                    <p class="text-sm text-gray-500">総応募数</p>
+                    <p id="totalApplications" class="text-2xl font-bold text-indigo-600">0</p>
                 </div>
-                <div>
-                    <label for="company" class="block text-sm font-medium text-gray-700">企業名</label>
-                    <input type="text" id="company" name="company" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                    <p class="text-sm text-gray-500">選考中</p>
+                    <p id="inProgressApplications" class="text-2xl font-bold text-blue-600">0</p>
                 </div>
-                <div>
-                    <label for="applyDate" class="block text-sm font-medium text-gray-700">応募日</label>
-                    <input type="date" id="applyDate" name="applyDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                    <p class="text-sm text-gray-500">内定獲得数</p>
+                    <p id="offeredApplications" class="text-2xl font-bold text-green-600">0</p>
                 </div>
-                <div>
-                    <label for="position" class="block text-sm font-medium text-gray-700">応募職位</label>
-                    <input type="text" id="position" name="position" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                    <p class="text-sm text-gray-500">見送り数</p>
+                    <p id="rejectedApplications" class="text-2xl font-bold text-red-600">0</p>
                 </div>
-                <div>
-                    <label for="agent" class="block text-sm font-medium text-gray-700">担当者</label>
-                    <input type="text" id="agent" name="agent" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="testDate" class="block text-sm font-medium text-gray-700">面接 (Webテスト) 日</label>
-                    <input type="date" id="testDate" name="testDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="resultDate" class="block text-sm font-medium text-gray-700">結果通知予定日</label>
-                    <input type="date" id="resultDate" name="resultDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="result" class="block text-sm font-medium text-gray-700">結果</label>
-                    <select id="result" name="result" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="未定">未定</option>
-                        <option value="通過">通過</option>
-                        <option value="見送り">見送り</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2 lg:col-span-3">
-                    <label for="notes" class="block text-sm font-medium text-gray-700">備考</label>
-                    <textarea id="notes" name="notes" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
-                </div>
-                <div class="md:col-span-2 lg:col-span-3 flex justify-end space-x-2">
-                    <button type="button" id="cancelEditBtn" class="hidden px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">キャンセル</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">保存</button>
-                </div>
-            </form>
-        </div>
+            </div>
 
-        <!-- Applications Table -->
-        <div class="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 rounded-lg">
-                <thead class="rounded-t-lg">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg" data-sort="status">選考状況</th>
-                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="company">企業名</th>
-                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="applyDate">応募日</th>
-                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="position">応募職位</th>
-                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="agent">担当者</th>
-                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="testDate">面接 (Webテスト) 日</th>
-                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="resultDate">結果通知予定日</th>
-                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="result">結果</th>
-                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">備考</th>
-                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right rounded-tr-lg">アクション</th>
-                    </tr>
-                </thead>
-                <tbody id="applicationTableBody" class="bg-white divide-y divide-gray-200 rounded-b-lg">
-                    <!-- Data will be inserted here by JavaScript -->
-                </tbody>
-            </table>
+            <!-- Add/Edit Form Toggle -->
+            <div class="mb-4">
+                <button id="toggleFormBtn" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    新しい応募を追加
+                </button>
+            </div>
+
+            <!-- Add/Edit Form (Collapsible) -->
+            <div id="applicationFormContainer" class="bg-white p-6 rounded-lg shadow-md mb-8 hidden">
+                <h2 id="formTitle" class="text-xl font-semibold mb-4 text-gray-900">新しい応募を追加</h2>
+                <form id="applicationForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700">選考状況</label>
+                        <select id="status" name="status" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="応募前">応募前</option>
+                            <option value="書類選考中">書類選考中</option>
+                            <option value="Webテスト中">Webテスト中</option>
+                            <option value="一次面接中">一次面接中</option>
+                            <option value="二次面接中">二次面接中</option>
+                            <option value="三次面接中">三次面接中</option>
+                            <option value="最終面接中">最終面接中</option>
+                            <option value="ジョブ選考中">ジョブ選考中</option>
+                            <option value="内定獲得">内定獲得</option>
+                            <option value="見送り">見送り</option>
+                            <option value="辞退">辞退</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="company" class="block text-sm font-medium text-gray-700">企業名</label>
+                        <input type="text" id="company" name="company" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="applyDate" class="block text-sm font-medium text-gray-700">応募日</label>
+                        <input type="date" id="applyDate" name="applyDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="position" class="block text-sm font-medium text-gray-700">応募職位</label>
+                        <input type="text" id="position" name="position" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="agent" class="block text-sm font-medium text-gray-700">担当者</label>
+                        <input type="text" id="agent" name="agent" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="testDate" class="block text-sm font-medium text-gray-700">面接 (Webテスト) 日</label>
+                        <input type="date" id="testDate" name="testDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="resultDate" class="block text-sm font-medium text-gray-700">結果通知予定日</label>
+                        <input type="date" id="resultDate" name="resultDate" class="mt-1 block w="full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="result" class="block text-sm font-medium text-gray-700">結果</label>
+                        <select id="result" name="result" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="未定">未定</option>
+                            <option value="通過">通過</option>
+                            <option value="見送り">見送り</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-3">
+                        <label for="notes" class="block text-sm font-medium text-gray-700">備考</label>
+                        <textarea id="notes" name="notes" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-3 flex justify-end space-x-2">
+                        <button type="button" id="cancelEditBtn" class="hidden px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">キャンセル</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">保存</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Applications Table -->
+            <div class="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 rounded-lg">
+                    <thead class="rounded-t-lg">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg" data-sort="status">選考状況</th>
+                            <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="company">企業名</th>
+                            <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="applyDate">応募日</th>
+                            <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="position">応募職位</th>
+                            <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="agent">担当者</th>
+                            <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="testDate">面接 (Webテスト) 日</th>
+                            <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="resultDate">結果通知予定日</th>
+                            <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="result">結果</th>
+                            <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">備考</th>
+                            <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right rounded-tr-lg">アクション</th>
+                        </tr>
+                    </thead>
+                    <tbody id="applicationTableBody" class="bg-white divide-y divide-gray-200 rounded-b-lg">
+                        <!-- Data will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -317,9 +386,16 @@
             }
         ];
 
-        // Get elements
-        const applicationFormContainer = document.getElementById('applicationFormContainer'); // New container for the form
-        const toggleFormBtn = document.getElementById('toggleFormBtn'); // New toggle button
+        // Get elements for password protection
+        const passwordOverlay = document.getElementById('passwordOverlay');
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordSubmitBtn = document.getElementById('passwordSubmitBtn');
+        const passwordError = document.getElementById('passwordError');
+        const appContent = document.getElementById('appContent');
+
+        // Main application elements
+        const applicationFormContainer = document.getElementById('applicationFormContainer');
+        const toggleFormBtn = document.getElementById('toggleFormBtn');
         const applicationForm = document.getElementById('applicationForm');
         const formTitle = document.getElementById('formTitle');
         const applicationTableBody = document.getElementById('applicationTableBody');
@@ -330,6 +406,21 @@
         const cancelEditBtn = document.getElementById('cancelEditBtn');
 
         let editingId = null; // To store the ID of the application being edited
+
+        // Password Check Logic
+        const correctPassword = "stellacareers";
+
+        passwordSubmitBtn.addEventListener('click', () => {
+            if (passwordInput.value === correctPassword) {
+                passwordOverlay.style.display = 'none';
+                appContent.style.display = 'block';
+                renderTable(); // Render table only after successful login
+            } else {
+                passwordError.textContent = 'パスワードが間違っています。';
+                passwordError.classList.remove('hidden');
+                passwordInput.value = '';
+            }
+        });
 
         // Function to toggle form visibility
         toggleFormBtn.addEventListener('click', () => {
@@ -396,12 +487,10 @@
         // Function to update summary statistics
         function updateStatistics() {
             totalApplications.textContent = applications.length;
-            // Only count statuses that indicate an active application process (excluding '応募前')
             inProgressApplications.textContent = applications.filter(app =>
                 ['書類選考中', 'Webテスト中', '一次面接中', '二次面接中', '三次面接中', '最終面接中', 'ジョブ選考中'].includes(app.status)
             ).length;
             offeredApplications.textContent = applications.filter(app => app.status === '内定獲得').length;
-            // "見送り" (Rejected) and "辞退" (Declined) are considered as "rejected" for statistics
             rejectedApplications.textContent = applications.filter(app => ['見送り', '辞退'].includes(app.status)).length;
         }
 
@@ -411,7 +500,6 @@
             const formData = new FormData(applicationForm);
             const newApp = {};
             for (const [key, value] of formData.entries()) {
-                // If a date field is empty, set it to 'N/A' instead of an empty string
                 if (['applyDate', 'testDate', 'resultDate'].includes(key) && value === '') {
                     newApp[key] = 'N/A';
                 } else {
@@ -420,7 +508,6 @@
             }
 
             if (editingId) {
-                // Edit existing application
                 const index = applications.findIndex(app => app.id === editingId);
                 if (index !== -1) {
                     applications[index] = { ...applications[index], ...newApp };
@@ -429,15 +516,13 @@
                 formTitle.textContent = '新しい応募を追加';
                 cancelEditBtn.classList.add('hidden');
             } else {
-                // Add new application
                 newApp.id = generateUUID();
                 applications.push(newApp);
             }
 
-            applicationForm.reset(); // Clear form fields
-            renderTable(); // Re-render table
-            // Hide form after submission if it was for adding new entry
-            if (!editingId) { // Check if it was an add operation, not edit
+            applicationForm.reset();
+            renderTable();
+            if (!editingId) {
                 applicationFormContainer.classList.add('hidden');
                 toggleFormBtn.textContent = '新しい応募を追加';
             }
@@ -460,8 +545,8 @@
                 editingId = id;
                 formTitle.textContent = '応募情報を編集';
                 cancelEditBtn.classList.remove('hidden');
-                applicationFormContainer.classList.remove('hidden'); // Show form for editing
-                toggleFormBtn.textContent = 'フォームを閉じる'; // Change toggle button text
+                applicationFormContainer.classList.remove('hidden');
+                toggleFormBtn.textContent = 'フォームを閉じる';
             }
         }
 
@@ -471,24 +556,22 @@
             applicationForm.reset();
             formTitle.textContent = '新しい応募を追加';
             cancelEditBtn.classList.add('hidden');
-            applicationFormContainer.classList.add('hidden'); // Hide form on cancel
-            toggleFormBtn.textContent = '新しい応募を追加'; // Reset toggle button text
+            applicationFormContainer.classList.add('hidden');
+            toggleFormBtn.textContent = '新しい応募を追加';
         });
 
         // Function to delete an application
         function deleteApplication(id) {
-            // Simple confirmation for deletion
             if (confirm('本当にこの応募を削除しますか？')) {
                 applications = applications.filter(app => app.id !== id);
                 renderTable();
-                // If the deleted item was being edited, clear the form
                 if (editingId === id) {
                     editingId = null;
                     applicationForm.reset();
                     formTitle.textContent = '新しい応募を追加';
                     cancelEditBtn.classList.add('hidden');
-                    applicationFormContainer.classList.add('hidden'); // Hide form
-                    toggleFormBtn.textContent = '新しい応募を追加'; // Reset toggle button text
+                    applicationFormContainer.classList.add('hidden');
+                    toggleFormBtn.textContent = '新しい応募を追加';
                 }
             }
         }
@@ -511,9 +594,7 @@
                     let valA = a[column];
                     let valB = b[column];
 
-                    // Handle date sorting
                     if (column.endsWith('Date')) {
-                        // Treat 'N/A' as a very small date for sorting purposes (pushes to end for ascending, beginning for descending)
                         const dateA = valA === 'N/A' ? (sortDirection === 'asc' ? new Date('9999-12-31') : new Date('0001-01-01')) : new Date(valA);
                         const dateB = valB === 'N/A' ? (sortDirection === 'asc' ? new Date('9999-12-31') : new Date('0001-01-01')) : new Date(valB);
                         
@@ -526,7 +607,6 @@
                         return 0;
                     }
 
-                    // Define a custom order for 'status' column
                     const statusOrder = [
                         '応募前', '書類選考中', 'Webテスト中', '一次面接中', 
                         '二次面接中', '三次面接中', '最終面接中', 'ジョブ選考中', 
@@ -536,14 +616,12 @@
                     if (column === 'status') {
                         const indexA = statusOrder.indexOf(valA);
                         const indexB = statusOrder.indexOf(valB);
-                        // Fallback for any status not in the defined order (e.g., new status added later)
                         if (indexA === -1 || indexB === -1) {
                             return sortDirection === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA));
                         }
                         return sortDirection === 'asc' ? indexA - indexB : indexB - indexA;
                     }
 
-                    // Default string comparison for other columns
                     if (valA < valB) {
                         return sortDirection === 'asc' ? -1 : 1;
                     }
@@ -556,8 +634,12 @@
             });
         });
 
-        // Initial render when the page loads
-        document.addEventListener('DOMContentLoaded', renderTable);
+        // Initial setup on page load: show password overlay, hide app content
+        document.addEventListener('DOMContentLoaded', () => {
+            appContent.style.display = 'none';
+            passwordOverlay.style.display = 'flex';
+            passwordInput.focus(); // Focus on password input
+        });
     </script>
 </body>
 </html>
