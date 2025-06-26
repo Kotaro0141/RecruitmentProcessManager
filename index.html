@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>コンサル選考進捗管理</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background for the page */
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate; /* For rounded corners on cells */
+            border-spacing: 0;
+            overflow: hidden; /* Ensures rounded corners are applied */
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* Light gray border */
+        }
+        th {
+            background-color: #e0e7ff; /* Light blue header */
+            font-weight: 600;
+            color: #374151; /* Darker gray text */
+            cursor: pointer; /* Indicate sortable */
+            white-space: nowrap; /* Prevent wrapping for headers */
+        }
+        tr {
+            background-color: #ffffff; /* Default white background for all rows */
+        }
+        tr:hover {
+            background-color: #f0f0f0; /* Slightly lighter gray on hover for all rows */
+        }
+        .rounded-t-lg th:first-child {
+            border-top-left-radius: 0.75rem; /* rounded-lg */
+        }
+        .rounded-t-lg th:last-child {
+            border-top-right-radius: 0.75rem; /* rounded-lg */
+        }
+        .rounded-b-lg tr:last-child td:first-child {
+            border-bottom-left-radius: 0.75rem; /* rounded-lg */
+        }
+        .rounded-b-lg tr:last-child td:last-child {
+            border-bottom-right-radius: 0.75rem; /* rounded-lg */
+        }
+        /* Conditional formatting for specific statuses (grey only) */
+        .status-内定獲得 { background-color: #e0e0e0; /* Light gray for offer */ }
+        .status-見送り { background-color: #d0d0d0; /* Slightly darker gray for rejected */ }
+        .status-辞退 { background-color: #d0d0d0; /* Same as rejected for declined */ }
+
+        /* Icon styling */
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 0.375rem; /* rounded-md */
+            transition: background-color 0.2s;
+        }
+        .icon-button:hover {
+            background-color: #e5e7eb;
+        }
+        .icon-button svg {
+            width: 1rem;
+            height: 1rem;
+            vertical-align: middle;
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            tr {
+                border: 1px solid #e5e7eb;
+                margin-bottom: 0.75rem;
+                border-radius: 0.75rem;
+                overflow: hidden;
+            }
+            td {
+                border-bottom: 1px solid #eee;
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+            }
+            td:before {
+                position: absolute;
+                top: 0;
+                left: 6px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                content: attr(data-label);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div class="container py-8">
+        <h1 class="text-3xl font-bold text-center mb-6 text-gray-900">コンサル選考進捗管理</h1>
+
+        <!-- Summary Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                <p class="text-sm text-gray-500">総応募数</p>
+                <p id="totalApplications" class="text-2xl font-bold text-indigo-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                <p class="text-sm text-gray-500">選考中</p>
+                <p id="inProgressApplications" class="text-2xl font-bold text-blue-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                <p class="text-sm text-gray-500">内定獲得数</p>
+                <p id="offeredApplications" class="text-2xl font-bold text-green-600">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md text-center">
+                <p class="text-sm text-gray-500">見送り数</p>
+                <p id="rejectedApplications" class="text-2xl font-bold text-red-600">0</p>
+            </div>
+        </div>
+
+        <!-- Add/Edit Form Toggle -->
+        <div class="mb-4">
+            <button id="toggleFormBtn" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                新しい応募を追加
+            </button>
+        </div>
+
+        <!-- Add/Edit Form (Collapsible) -->
+        <div id="applicationFormContainer" class="bg-white p-6 rounded-lg shadow-md mb-8 hidden">
+            <h2 id="formTitle" class="text-xl font-semibold mb-4 text-gray-900">新しい応募を追加</h2>
+            <form id="applicationForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700">選考状況</label>
+                    <select id="status" name="status" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="応募前">応募前</option>
+                        <option value="書類選考中">書類選考中</option>
+                        <option value="Webテスト中">Webテスト中</option>
+                        <option value="一次面接中">一次面接中</option>
+                        <option value="二次面接中">二次面接中</option>
+                        <option value="三次面接中">三次面接中</option>
+                        <option value="最終面接中">最終面接中</option>
+                        <option value="ジョブ選考中">ジョブ選考中</option>
+                        <option value="内定獲得">内定獲得</option>
+                        <option value="見送り">見送り</option>
+                        <option value="辞退">辞退</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="company" class="block text-sm font-medium text-gray-700">企業名</label>
+                    <input type="text" id="company" name="company" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="applyDate" class="block text-sm font-medium text-gray-700">応募日</label>
+                    <input type="date" id="applyDate" name="applyDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="position" class="block text-sm font-medium text-gray-700">応募職位</label>
+                    <input type="text" id="position" name="position" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="agent" class="block text-sm font-medium text-gray-700">担当者</label>
+                    <input type="text" id="agent" name="agent" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="testDate" class="block text-sm font-medium text-gray-700">面接 (Webテスト) 日</label>
+                    <input type="date" id="testDate" name="testDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="resultDate" class="block text-sm font-medium text-gray-700">結果通知予定日</label>
+                    <input type="date" id="resultDate" name="resultDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="result" class="block text-sm font-medium text-gray-700">結果</label>
+                    <select id="result" name="result" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="未定">未定</option>
+                        <option value="通過">通過</option>
+                        <option value="見送り">見送り</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 lg:col-span-3">
+                    <label for="notes" class="block text-sm font-medium text-gray-700">備考</label>
+                    <textarea id="notes" name="notes" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                </div>
+                <div class="md:col-span-2 lg:col-span-3 flex justify-end space-x-2">
+                    <button type="button" id="cancelEditBtn" class="hidden px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">キャンセル</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">保存</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Applications Table -->
+        <div class="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 rounded-lg">
+                <thead class="rounded-t-lg">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg" data-sort="status">選考状況</th>
+                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="company">企業名</th>
+                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="applyDate">応募日</th>
+                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="position">応募職位</th>
+                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="agent">担当者</th>
+                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="testDate">面接 (Webテスト) 日</th>
+                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="resultDate">結果通知予定日</th>
+                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider" data-sort="result">結果</th>
+                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">備考</th>
+                        <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right rounded-tr-lg">アクション</th>
+                    </tr>
+                </thead>
+                <tbody id="applicationTableBody" class="bg-white divide-y divide-gray-200 rounded-b-lg">
+                    <!-- Data will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Unique ID generator
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Initial data (from the provided markdown table)
+        let applications = [
+            {
+                id: generateUUID(),
+                status: 'Webテスト中',
+                company: 'マッキンゼー',
+                applyDate: '2025-06-20',
+                position: 'アソシエイト',
+                agent: '〇〇エージェント',
+                testDate: '2025-06-25',
+                resultDate: '2025-07-02',
+                result: '未定',
+                notes: 'ゲーム形式のテスト対策を継続'
+            },
+            {
+                id: generateUUID(),
+                status: '一次面接中',
+                company: 'BCG',
+                applyDate: '2025-06-22',
+                position: 'コンサルタント',
+                agent: '△△エージェント',
+                testDate: '2025-07-10',
+                resultDate: '2025-07-15',
+                result: '未定',
+                notes: 'ケース面接の練習が重要'
+            },
+            {
+                id: generateUUID(),
+                status: '内定獲得',
+                company: 'EYパルテノン',
+                applyDate: '2025-06-15',
+                position: 'シニアコンサルタント',
+                agent: '□□エージェント',
+                testDate: '2025-07-01',
+                resultDate: '2025-07-03',
+                result: '内定獲得',
+                notes: '処遇交渉中、返答期限：2025/07/10'
+            },
+            {
+                id: generateUUID(),
+                status: '見送り',
+                company: 'DI',
+                applyDate: '2025-06-18',
+                position: 'アソシエイト',
+                agent: '〇〇エージェント',
+                testDate: '2025-06-28',
+                resultDate: '2025-07-01',
+                result: '見送り',
+                notes: 'GDでの役割が不明瞭だった可能性'
+            },
+            {
+                id: generateUUID(),
+                status: '書類選考中',
+                company: 'A.T.カーニー',
+                applyDate: '2025-06-24',
+                position: 'マネージャー',
+                agent: '直接応募',
+                testDate: 'N/A',
+                resultDate: '2025-07-05',
+                result: '未定',
+                notes: '応募書類を再確認'
+            },
+            {
+                id: generateUUID(),
+                status: '応募前',
+                company: 'ローランド・ベルガー',
+                applyDate: 'N/A',
+                position: 'コンサルタント',
+                agent: '△△エージェント',
+                testDate: 'N/A',
+                resultDate: 'N/A',
+                result: '未定',
+                notes: 'Webテスト（TG-WEB）対策を開始予定'
+            }
+        ];
+
+        // Get elements
+        const applicationFormContainer = document.getElementById('applicationFormContainer'); // New container for the form
+        const toggleFormBtn = document.getElementById('toggleFormBtn'); // New toggle button
+        const applicationForm = document.getElementById('applicationForm');
+        const formTitle = document.getElementById('formTitle');
+        const applicationTableBody = document.getElementById('applicationTableBody');
+        const totalApplications = document.getElementById('totalApplications');
+        const inProgressApplications = document.getElementById('inProgressApplications');
+        const offeredApplications = document.getElementById('offeredApplications');
+        const rejectedApplications = document.getElementById('rejectedApplications');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+        let editingId = null; // To store the ID of the application being edited
+
+        // Function to toggle form visibility
+        toggleFormBtn.addEventListener('click', () => {
+            applicationFormContainer.classList.toggle('hidden');
+            if (applicationFormContainer.classList.contains('hidden')) {
+                toggleFormBtn.textContent = '新しい応募を追加';
+                // Reset form and editing state when closing
+                editingId = null;
+                applicationForm.reset();
+                formTitle.textContent = '新しい応募を追加';
+                cancelEditBtn.classList.add('hidden');
+            } else {
+                toggleFormBtn.textContent = 'フォームを閉じる';
+            }
+        });
+
+        // Function to render the table and update statistics
+        function renderTable() {
+            applicationTableBody.innerHTML = ''; // Clear existing rows
+            applications.forEach(app => {
+                const row = document.createElement('tr');
+                // Add class for conditional formatting
+                const statusClass = app.status ? `status-${app.status.replace(/ /g, '')}` : '';
+                row.classList.add(statusClass);
+
+                // Populate row with data
+                row.innerHTML = `
+                    <td data-label="選考状況" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${app.status}</td>
+                    <td data-label="企業名" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.company}</td>
+                    <td data-label="応募日" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.applyDate}</td>
+                    <td data-label="応募職位" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.position}</td>
+                    <td data-label="担当者" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.agent}</td>
+                    <td data-label="面接 (Webテスト) 日" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.testDate}</td>
+                    <td data-label="結果通知予定日" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.resultDate}</td>
+                    <td data-label="結果" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.result}</td>
+                    <td data-label="備考" class="px-6 py-4 text-sm text-gray-500">${app.notes}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button type="button" class="icon-button edit-btn" data-id="${app.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                        <button type="button" class="icon-button delete-btn" data-id="${app.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </td>
+                `;
+                applicationTableBody.appendChild(row);
+            });
+
+            // Add event listeners for edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (e) => editApplication(e.currentTarget.dataset.id));
+            });
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (e) => deleteApplication(e.currentTarget.dataset.id));
+            });
+
+            updateStatistics(); // Update summary
+        }
+
+        // Function to update summary statistics
+        function updateStatistics() {
+            totalApplications.textContent = applications.length;
+            // Only count statuses that indicate an active application process (excluding '応募前')
+            inProgressApplications.textContent = applications.filter(app =>
+                ['書類選考中', 'Webテスト中', '一次面接中', '二次面接中', '三次面接中', '最終面接中', 'ジョブ選考中'].includes(app.status)
+            ).length;
+            offeredApplications.textContent = applications.filter(app => app.status === '内定獲得').length;
+            // "見送り" (Rejected) and "辞退" (Declined) are considered as "rejected" for statistics
+            rejectedApplications.textContent = applications.filter(app => ['見送り', '辞退'].includes(app.status)).length;
+        }
+
+        // Function to handle form submission (Add/Edit)
+        applicationForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(applicationForm);
+            const newApp = {};
+            for (const [key, value] of formData.entries()) {
+                // If a date field is empty, set it to 'N/A' instead of an empty string
+                if (['applyDate', 'testDate', 'resultDate'].includes(key) && value === '') {
+                    newApp[key] = 'N/A';
+                } else {
+                    newApp[key] = value;
+                }
+            }
+
+            if (editingId) {
+                // Edit existing application
+                const index = applications.findIndex(app => app.id === editingId);
+                if (index !== -1) {
+                    applications[index] = { ...applications[index], ...newApp };
+                }
+                editingId = null;
+                formTitle.textContent = '新しい応募を追加';
+                cancelEditBtn.classList.add('hidden');
+            } else {
+                // Add new application
+                newApp.id = generateUUID();
+                applications.push(newApp);
+            }
+
+            applicationForm.reset(); // Clear form fields
+            renderTable(); // Re-render table
+            // Hide form after submission if it was for adding new entry
+            if (!editingId) { // Check if it was an add operation, not edit
+                applicationFormContainer.classList.add('hidden');
+                toggleFormBtn.textContent = '新しい応募を追加';
+            }
+        });
+
+        // Function to populate form for editing
+        function editApplication(id) {
+            const appToEdit = applications.find(app => app.id === id);
+            if (appToEdit) {
+                document.getElementById('status').value = appToEdit.status;
+                document.getElementById('company').value = appToEdit.company;
+                document.getElementById('applyDate').value = appToEdit.applyDate === 'N/A' ? '' : appToEdit.applyDate;
+                document.getElementById('position').value = appToEdit.position;
+                document.getElementById('agent').value = appToEdit.agent;
+                document.getElementById('testDate').value = appToEdit.testDate === 'N/A' ? '' : appToEdit.testDate;
+                document.getElementById('resultDate').value = appToEdit.resultDate === 'N/A' ? '' : appToEdit.resultDate;
+                document.getElementById('result').value = appToEdit.result;
+                document.getElementById('notes').value = appToEdit.notes;
+
+                editingId = id;
+                formTitle.textContent = '応募情報を編集';
+                cancelEditBtn.classList.remove('hidden');
+                applicationFormContainer.classList.remove('hidden'); // Show form for editing
+                toggleFormBtn.textContent = 'フォームを閉じる'; // Change toggle button text
+            }
+        }
+
+        // Function to cancel editing
+        cancelEditBtn.addEventListener('click', () => {
+            editingId = null;
+            applicationForm.reset();
+            formTitle.textContent = '新しい応募を追加';
+            cancelEditBtn.classList.add('hidden');
+            applicationFormContainer.classList.add('hidden'); // Hide form on cancel
+            toggleFormBtn.textContent = '新しい応募を追加'; // Reset toggle button text
+        });
+
+        // Function to delete an application
+        function deleteApplication(id) {
+            // Simple confirmation for deletion
+            if (confirm('本当にこの応募を削除しますか？')) {
+                applications = applications.filter(app => app.id !== id);
+                renderTable();
+                // If the deleted item was being edited, clear the form
+                if (editingId === id) {
+                    editingId = null;
+                    applicationForm.reset();
+                    formTitle.textContent = '新しい応募を追加';
+                    cancelEditBtn.classList.add('hidden');
+                    applicationFormContainer.classList.add('hidden'); // Hide form
+                    toggleFormBtn.textContent = '新しい応募を追加'; // Reset toggle button text
+                }
+            }
+        }
+
+        // Sorting functionality
+        let sortColumn = null;
+        let sortDirection = 'asc';
+
+        document.querySelectorAll('th[data-sort]').forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.dataset.sort;
+                if (sortColumn === column) {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortColumn = column;
+                    sortDirection = 'asc';
+                }
+
+                applications.sort((a, b) => {
+                    let valA = a[column];
+                    let valB = b[column];
+
+                    // Handle date sorting
+                    if (column.endsWith('Date')) {
+                        // Treat 'N/A' as a very small date for sorting purposes (pushes to end for ascending, beginning for descending)
+                        const dateA = valA === 'N/A' ? (sortDirection === 'asc' ? new Date('9999-12-31') : new Date('0001-01-01')) : new Date(valA);
+                        const dateB = valB === 'N/A' ? (sortDirection === 'asc' ? new Date('9999-12-31') : new Date('0001-01-01')) : new Date(valB);
+                        
+                        if (dateA < dateB) {
+                            return sortDirection === 'asc' ? -1 : 1;
+                        }
+                        if (dateA > dateB) {
+                            return sortDirection === 'asc' ? 1 : -1;
+                        }
+                        return 0;
+                    }
+
+                    // Define a custom order for 'status' column
+                    const statusOrder = [
+                        '応募前', '書類選考中', 'Webテスト中', '一次面接中', 
+                        '二次面接中', '三次面接中', '最終面接中', 'ジョブ選考中', 
+                        '内定獲得', '辞退', '見送り' 
+                    ];
+
+                    if (column === 'status') {
+                        const indexA = statusOrder.indexOf(valA);
+                        const indexB = statusOrder.indexOf(valB);
+                        // Fallback for any status not in the defined order (e.g., new status added later)
+                        if (indexA === -1 || indexB === -1) {
+                            return sortDirection === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA));
+                        }
+                        return sortDirection === 'asc' ? indexA - indexB : indexB - indexA;
+                    }
+
+                    // Default string comparison for other columns
+                    if (valA < valB) {
+                        return sortDirection === 'asc' ? -1 : 1;
+                    }
+                    if (valA > valB) {
+                        return sortDirection === 'asc' ? 1 : -1;
+                    }
+                    return 0;
+                });
+                renderTable();
+            });
+        });
+
+        // Initial render when the page loads
+        document.addEventListener('DOMContentLoaded', renderTable);
+    </script>
+</body>
+</html>
